@@ -1,3 +1,5 @@
+![example workflow](https://github.com/esromneb/open-version-pack/actions/workflows/build.yml/badge.svg)
+
 # open-version-pack
 `open-version-pack` is meant for tracking git hashes throughout a ci build. It supports any level of nesting as well as builds that produce a tar, and a subsequent build that consumes that tar.
 

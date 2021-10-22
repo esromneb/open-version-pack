@@ -50,7 +50,7 @@ const darkblue = '#4472C4';
 
 
 let myparse = (input, cb) => {
-  console.log('about to parse' + input);
+  // console.log('about to parse' + input);
   parse(input, {
     comment: '#',
     relax_column_count: true,
@@ -131,7 +131,7 @@ const edges2 = [
 
 
 
-  console.log(level);
+  // console.log(level);
 
   let state = {};
 
@@ -148,8 +148,7 @@ const edges2 = [
 
       let type = entry[0];
 
-      console.log("looking at entry " + entry + ' type ' + type);
-
+      // console.log("looking at entry " + entry + ' type ' + type);
 
       if(type === 'circleci' || type === 'github-actions' || type === 'gitlab-runner') {
         state[key].build = true;
@@ -168,7 +167,7 @@ const edges2 = [
       }
 
 
-      let name = 'xxxxx';
+      let name = '?????';
       if( state[key].build ) {
         name = type + ' ' + '#' + entry[2];
       } else if (type === 'git') {
@@ -178,52 +177,49 @@ const edges2 = [
       }
 
 
+      // create the node
       nodes[key] = { ...terminal, label: name };
-      // if( i == 0 ) {
 
-      // } else {
-        let foundbuild = false;
-        console.log('------');
-        for(let x in state) {
-          console.log(x);
-          // w
-            // console.log(`while in ${key}, found that ${x} was a build`);
-          const isparent = x[0] === `${i-1}`;
 
-          const issame = x[0] === `${i}`;
 
-          if( issame ) {
-            // we are git, they are build
-            if( state[key].git === true && state[x].build === true) {
-                edges.push(
-                  { src: key, dest: x, label: "trigger", color: "blue" },
-                );
-            }
+      // =======================
+      // search for links
+      // FIXME this may need to be run in the loop a 2nd time
+
+      let foundbuild = false;
+      // console.log('------');
+      for(let x in state) {
+        // console.log(x);
+
+        // FIXME: only supports 9 inputs, replace this with a regex
+        const isparent = x[0] === `${i-1}`;
+        const issame = x[0] === `${i}`;
+
+        if( issame ) {
+          // we are git, they are build
+          if( state[key].git === true && state[x].build === true) {
+              edges.push(
+                { src: key, dest: x, label: "trigger", color: "blue" },
+              );
           }
-
-          if( isparent ) {
-
-            
-
-            // we are submodule, they are parent??
-            if( state[key].submodule === true && state[x].git === true) {
-                edges.push(
-                  { src: key, dest: x, label: "submodule", color: darkblue },
-                );
-            }
-
-          }
-
-
-
         }
-      // }
+
+        if( isparent ) {
+          // we are submodule, they are parent??
+          // FIXME this is prone to breaking if we have multiple layers
+          if( state[key].submodule === true && state[x].git === true) {
+              edges.push(
+                { src: key, dest: x, label: "submodule", color: darkblue },
+              );
+          }
+        }
+      }
 
     }
   }
 
-  console.log(nodes);
-  console.log(state);
+  // console.log(nodes);
+  // console.log(state);
 
 
 

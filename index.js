@@ -1,10 +1,48 @@
-const fs = require('fs');
-const parse = require('csv-parse');
-const assert = require('assert');
-const jsonToDot = require('json-to-dot');
 
+import fs from 'fs';
+import parse from 'csv-parse';
+import jsonToDot from 'json-to-dot';
+import {serializeGraph} from '@thi.ng/dot'
 
 const path = process.argv[2];
+
+
+// node type style presets
+const terminal = {
+    color: "black",
+    fontcolor: "white",
+};
+
+// operator nodes use "Mrecord" shape
+// with input and output port declarations
+const operator = {
+    fillcolor: "yellow",
+    shape: "Mrecord",
+    ins: { 0: "a", 1: "b" },
+    outs: { "out": "out" }
+};
+
+const attribs = {
+    rankdir: "LR",
+    fontname: "Inconsolata",
+    fontsize: 9,
+    fontcolor: "gray",
+    label: "Generated with @thi.ng/dot",
+    labeljust: "l",
+    labelloc: "b",
+    // node defaults
+    node: {
+        style: "filled",
+        fontname: "Inconsolata",
+        fontsize: 11
+    },
+    // edge defaults
+    edge: {
+        arrowsize: 0.75,
+        fontname: "Inconsolata",
+        fontsize: 9
+    }
+};
 
 
 
@@ -17,8 +55,8 @@ let myparse = (input, cb) => {
     // skip_lines_with_error: true,
 
   }, function(err, output) {
-    cb(output);
     // console.log(output);
+    cb(output);
     // console.log(err);
     // assert.deepStrictEqual(
     //   output,
@@ -28,18 +66,27 @@ let myparse = (input, cb) => {
 }
 
 
-let tojson = (o) => {
+let ovpToDot = (o) => {
   let r = {};
   let level = [];
   // loop through and sort by indentation
-  for(row of o) {
+  for(let row of o) {
     const rl = row.length;
     // console.log(`${row} foo ${rl}`);
     if( typeof level[rl] === 'undefined' ) {
       // level[rl].push(row);
       level[rl] = []
     }
-    level[rl].push(row);
+
+    // normalize each row now that we've recorded the depth
+    let row2 = [];
+    for(let val of row) {
+      if( val !== '') {
+        row2.push(val);
+      }
+    }
+
+    level[rl].push(row2);
     // console.log(`${rl}`);
   }
 
@@ -53,16 +100,119 @@ let tojson = (o) => {
     }
   }
 
-  
 
-  for(let i = 0; i < level.length; i++) {
-    
-  }
+  let nodes = {
+    artifact: {...terminal, label: "artifact" }
+  };
+  let edges = [];
+
+
+// graph nodes (the keys are used as node IDs)
+// use spread operator to inject style presets
+const nodes2 = {
+    x:   { ...terminal, label: "x (12)" },
+    y:   { ...terminal, label: "y (23)" },
+    res: { ...terminal, label: "result (8050)", peripheries: 2 },
+    op1: { ...operator, fillcolor: "green", label: "op1\n(+)" },
+    op2: { ...operator, label: "op2\n(*)" },
+};
+// graph edges (w/ optional ports & extra attribs)
+const edges2 = [
+    { src: "x", dest: "op1", destPort: 1 },
+    { src: "y", dest: "op1", destPort: 0 },
+    { src: "y", dest: "op2", destPort: 0, label: "xform", color: "blue" },
+    { src: "op1", srcPort: "out", dest: "op2", destPort: 1 },
+    { src: "op2", srcPort: "out", dest: "res"},
+];
 
 
 
   console.log(level);
-  return level;
+
+  let state = {};
+
+
+  for(let i = 0; i < level.length; i++) {
+    // each indent level (2,3)
+    let row = level[i];
+    for(let j = 0; j < row.length; j++) {
+      const entry = row[j];
+      // each item at that indent
+      const key = `${i}_${j}`;
+
+      state[key] = {};
+
+      let type = entry[0];
+
+      console.log("looking at entry " + entry + ' type ' + type);
+
+
+      if(type === 'circleci' || type === 'github-actions' || type === 'gitlab-runner') {
+        state[key].build = true;
+      } else {
+        state[key].build = false;
+      }
+
+      state[key].git = false;
+      state[key].submodule = false;
+      if(type === 'git') {
+        state[key].git = true;
+      }
+      if(type === 'submodule') {
+        state[key].git = true;
+        state[key].submodule = true;
+      }
+
+
+      let name = 'xxxxx';
+      if( state[key].build ) {
+        name = type + ' ' + '#' + entry[2];
+      } else if (type === 'git') {
+        name = entry[1];
+      } else if (type === 'submodule') {
+        name = 'submodule ' + entry[1];
+      }
+
+
+      nodes[key] = { ...terminal, label: name };
+      if( i == 0 ) {
+
+      } else {
+        let foundbuild = false;
+        console.log('------');
+        for(let x in state) {
+          console.log(x);
+          if( x[0] === `${i-1}` && state[x].build === true) {
+            console.log(`while in ${key}, found that ${x} was a build`);
+
+            if( state[key].git === true ) {
+              edges.push(
+                { src: key, dest: x, label: "a", color: "blue" },
+              );
+            }
+
+          }
+        }
+      }
+
+    }
+  }
+
+  console.log(nodes);
+  console.log(state);
+
+
+
+
+  let dot2 = serializeGraph({
+    directed: true, // default
+    attribs,
+    nodes,
+    edges
+  });
+
+
+  return dot2;
 }
 
 
@@ -73,22 +223,30 @@ fs.readFile(path, 'utf8', function (err,data) {
     return console.log(err);
   }
   // console.log(data);
-  myparse(data,(c)=>{
-    const j = tojson(c);
-    const dot = jsonToDot(j);
-    console.log(dot);
+  myparse(data,(c)=> {
+    // console.log('myparse');
+    // console.log(c);
+
+    
+    const j = ovpToDot(c);
+    console.log(j);
+    // const dot = jsonToDot(j);
+    // console.log(dot);
   });
 });
 
 
 
-const dot = jsonToDot({
-  foo: ['bar', 'buzz'],
-  bar: ['foo'],
-  norf: ['worble', 'buzz'],
-  worf: ['worble'],
-  fizz: ['buzz']   //  fizz->buzz
-});
+// const dot = jsonToDot({
+//   foo: ['bar', 'buzz'],
+//   bar: ['foo'],
+//   norf: ['worble', 'buzz'],
+//   worf: ['worble'],
+//   fizz: ['buzz']   //  fizz->buzz
+// });
 
 
 // console.log(dot);
+
+
+// console.log(dot2);

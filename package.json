@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "description": "Simple format for tracking inputs to builds and build history",
   "main": "index.js",
+  "type": "module",
   "directories": {
     "example": "example"
   },

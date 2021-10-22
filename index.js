@@ -28,7 +28,7 @@ const attribs = {
     fontname: "Inconsolata",
     fontsize: 9,
     fontcolor: "gray",
-    label: "Generated with @thi.ng/dot",
+    // label: "Build Tree",
     labeljust: "l",
     labelloc: "b",
     // node defaults

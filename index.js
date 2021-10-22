@@ -9,8 +9,9 @@ const path = process.argv[2];
 
 // node type style presets
 const terminal = {
-    color: "black",
-    fontcolor: "white",
+    // color: "black",
+    // fontcolor: "white",
+    shape: "Mrecord",
 };
 
 // operator nodes use "Mrecord" shape
@@ -32,7 +33,7 @@ const attribs = {
     labelloc: "b",
     // node defaults
     node: {
-        style: "filled",
+        // style: "filled",
         fontname: "Inconsolata",
         fontsize: 11
     },
@@ -43,6 +44,8 @@ const attribs = {
         fontsize: 9
     }
 };
+
+const darkblue = '#4472C4';
 
 
 
@@ -82,7 +85,8 @@ let ovpToDot = (o) => {
     let row2 = [];
     for(let val of row) {
       if( val !== '') {
-        row2.push(val);
+        // and remove whitespace
+        row2.push(val.trim());
       }
     }
 
@@ -102,7 +106,7 @@ let ovpToDot = (o) => {
 
 
   let nodes = {
-    artifact: {...terminal, label: "artifact" }
+
   };
   let edges = [];
 
@@ -168,32 +172,52 @@ const edges2 = [
       if( state[key].build ) {
         name = type + ' ' + '#' + entry[2];
       } else if (type === 'git') {
-        name = entry[1];
+        name = entry[1] + '\n' + entry[2];
       } else if (type === 'submodule') {
-        name = 'submodule ' + entry[1];
+        name = entry[1] + '\n' + entry[2];
       }
 
 
       nodes[key] = { ...terminal, label: name };
-      if( i == 0 ) {
+      // if( i == 0 ) {
 
-      } else {
+      // } else {
         let foundbuild = false;
         console.log('------');
         for(let x in state) {
           console.log(x);
-          if( x[0] === `${i-1}` && state[x].build === true) {
-            console.log(`while in ${key}, found that ${x} was a build`);
+          // w
+            // console.log(`while in ${key}, found that ${x} was a build`);
+          const isparent = x[0] === `${i-1}`;
 
-            if( state[key].git === true ) {
-              edges.push(
-                { src: key, dest: x, label: "a", color: "blue" },
-              );
+          const issame = x[0] === `${i}`;
+
+          if( issame ) {
+            // we are git, they are build
+            if( state[key].git === true && state[x].build === true) {
+                edges.push(
+                  { src: key, dest: x, label: "trigger", color: "blue" },
+                );
+            }
+          }
+
+          if( isparent ) {
+
+            
+
+            // we are submodule, they are parent??
+            if( state[key].submodule === true && state[x].git === true) {
+                edges.push(
+                  { src: key, dest: x, label: "submodule", color: darkblue },
+                );
             }
 
           }
+
+
+
         }
-      }
+      // }
 
     }
   }

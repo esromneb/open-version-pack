@@ -20,6 +20,7 @@
   },
   "homepage": "https://github.com/esromneb/open-version-pack#readme",
   "dependencies": {
+    "@thi.ng/dot": "^2.0.3",
     "csv-parse": "^4.16.3",
     "json-to-dot": "^1.1.0"
   }

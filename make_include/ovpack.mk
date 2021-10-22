@@ -24,6 +24,9 @@ append-submodule:
 # 	sed -i "" '1{h;s/.*/${a}/;G;}' input
 append-git:
 	test -f ${f} && sed -i "1i git, ${a}, ${b}" ${f} || echo git, ${a}, ${b} > ${f}
+
+append-build:
+	test -f ${f} && sed -i "1i ${a}, ${b}, ${c}" ${f} || echo "It is illegal to append a build to an empty file"
 	# @echo git, ${a}, ${b} >> ${f}
 
 # echo "$(echo -n 'git, ${a}, ${b}'; cat ${f})" > new.txt

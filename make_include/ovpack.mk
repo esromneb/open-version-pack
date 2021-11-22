@@ -11,10 +11,11 @@ create:
 indent:
 	sed -i 's/^/,/' ${f}
 
+SUBMODULEC=$(shell git submodule foreach echo x | wc -c)
+
 # discover and pack, will detect if submodules exist and call the correct target
 discover-pack:
-	@echo Fixme
-	#bash -c 'if [[ $(git submodule foreach echo x | head -c1 | wc -c) -ne 0 ]]; then make f=${f} discover-pack-submodule; else make f=${f} discover-pack-git; fi'
+	bash -c 'if [[ ${SUBMODULEC} -ne 0 ]]; then make f=${f} discover-pack-submodule; else make f=${f} discover-pack-git; fi'
 
 
 # only run if there are submodules

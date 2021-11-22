@@ -1,11 +1,7 @@
 
-.PHONY: create indent discover-pack discover-pack-submodule discover-pack-git append-submodule append-git append-build no-char-message
+.PHONY: indent discover-pack discover-pack-submodule discover-pack-git append-submodule append-git append-build no-char-message
 
 ifdef f
-
-create:
-	@echo file: ${f}
-	@echo "\n"
 
 
 indent:
@@ -61,7 +57,6 @@ else
 no-char-message:
 	@echo please add f=xxx
 
-create: no-char-message
 indent: no-char-message
 
 endif
